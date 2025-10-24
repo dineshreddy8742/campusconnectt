@@ -35,9 +35,33 @@ const PORT = process.env.PORT || 5000;
 const app = express();
 
 app.use(morgan("dev"));
+const FRONTEND_URL = process.env.FRONTEND_URL || '';
+
+// Build an origin checker that allows explicit FRONTEND_URL and, in dev, any localhost origin
+const originChecker = (origin, callback) => {
+  // allow requests with no origin (e.g., server-to-server, mobile clients)
+  if (!origin) return callback(null, true);
+
+  // Allow explicit configured frontend URL
+  if (FRONTEND_URL && origin === FRONTEND_URL) return callback(null, true);
+
+  // In development, allow any localhost origin (different vite ports like 5173/5174)
+  if (process.env.NODE_ENV !== 'production') {
+    try {
+      const u = new URL(origin);
+      if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') return callback(null, true);
+    } catch (e) {
+      // fallthrough
+    }
+  }
+
+  // otherwise reject
+  return callback(new Error('Not allowed by CORS'));
+};
+
 app.use(
   cors({
-    origin: "http://localhost:5173", // Frontend'in çalıştığı URL
+    origin: originChecker,
     credentials: true,
   })
 );
