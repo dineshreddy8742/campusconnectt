@@ -62,4 +62,4 @@ It’s a LinkedIn-style sandbox that helps users create profiles, share posts, c
 ---
 
 ## 🧩 
-Built with ❤️ by Professor Yatish and team — pushing the limits of full-stack innovation.
+Built with ❤️ by Professor Yatish pushing the limits of full-stack innovation.
