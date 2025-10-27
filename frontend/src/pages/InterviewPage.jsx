@@ -57,6 +57,10 @@ const Card = ({ t, onOpen }) => {
 
 const Modal = ({ open, onClose, items, title }) => {
   if (!open) return null;
+  
+  // Ensure items is always an array
+  const safeItems = Array.isArray(items) ? items : [];
+  
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-2xl">
@@ -69,7 +73,7 @@ const Modal = ({ open, onClose, items, title }) => {
         </div>
 
         <div className="mt-6 grid grid-cols-1 gap-3">
-          {items.map((it, i) => (
+          {safeItems.map((it, i) => (
             <a key={i} href={it.url} target="_blank" rel="noreferrer" className="p-3 rounded-lg bg-gray-50 hover:bg-gray-100 flex items-center justify-between">
               <div>
                 <div className="font-semibold">{it.title}</div>
@@ -78,6 +82,13 @@ const Modal = ({ open, onClose, items, title }) => {
               <ExternalLink className="text-gray-500" />
             </a>
           ))}
+          
+          {/* Show message if no items */}
+          {safeItems.length === 0 && (
+            <div className="text-center text-gray-500 py-4">
+              No resources available for this category.
+            </div>
+          )}
         </div>
       </motion.div>
     </div>
@@ -88,10 +99,18 @@ export default function InterviewPage() {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(null);
 
-  const handleOpen = (id) => { setActive(id); setOpen(true); };
-  const handleClose = () => { setOpen(false); setActive(null); };
+  const handleOpen = (id) => { 
+    setActive(id); 
+    setOpen(true); 
+  };
+  
+  const handleClose = () => { 
+    setOpen(false); 
+    setActive(null); 
+  };
 
-  const items = active ? LINKS[active] || [] : [];
+  // More robust items calculation
+  const items = (active && LINKS[active]) ? LINKS[active] : [];
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
