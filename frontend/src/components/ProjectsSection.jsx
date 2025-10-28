@@ -4,7 +4,7 @@ import { axiosInstance } from '../lib/axios';
 import { toast } from 'react-hot-toast';
 
 const ProjectsSection = ({ userData, isOwnProfile, onSave }) => {
-  const [projects, setProjects] = useState(userData.projects || []);
+  const [projects, setProjects] = useState(Array.isArray(userData.projects) ? userData.projects : []);
   const [editing, setEditing] = useState(false);
   const [newProject, setNewProject] = useState({ title: '', description: '', url: '' });
   const queryClient = useQueryClient();

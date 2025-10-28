@@ -12,16 +12,7 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000,
-      initialData: (context) => {
-        // Initialize arrays as empty arrays instead of undefined
-        if (context.queryKey.includes('userPosts') ||
-          context.queryKey.includes('projects') ||
-          context.queryKey.includes('education')) {
-          return [];
-        }
-        return undefined;
-      },
+      staleTime: 5 * 60 * 1000
     },
   },
 });

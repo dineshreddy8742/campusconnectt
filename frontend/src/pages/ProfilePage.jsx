@@ -51,11 +51,11 @@ const ProfilePage = () => {
   });
 
   // fetch posts for the profile user (hook must be called unconditionally to preserve hook order)
-  const { data: userPosts, isLoading: isLoadingPosts } = useQuery({
+  const { data: userPosts = [], isLoading: isLoadingPosts } = useQuery({
     queryKey: ["userPosts", decodedParam],
     queryFn: async () => {
       const res = await axiosInstance.get(`/posts/user/${encodeURIComponent(decodedParam)}`);
-      return res.data;
+      return res.data || [];
     },
     enabled: !!decodedParam,
   });
