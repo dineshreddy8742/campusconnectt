@@ -18,7 +18,7 @@ export default function SearchDropdown({ results, onClose }) {
         <div className="font-semibold">Posts</div>
         {results.posts?.length ? results.posts.map(p => (
           <Link key={p._id} to={`/post/${p._id}`} className="block p-2 hover:bg-gray-100" onClick={onClose}>
-            <div className="font-medium">{p.title || p.content.slice(0, 60)}</div>
+            <div className="font-medium">{p.content?.slice(0, 60) || 'No content'}</div>
             <div className="text-sm text-gray-500">by {p.author?.name || p.author?.username}</div>
           </Link>
         )) : <div className="text-sm text-gray-500 p-2">No posts</div>}
