@@ -13,8 +13,7 @@ const NetworkPage = () => {
     queryFn: async () => {
       try {
         const res = await axiosInstance.get("/connections/requests");
-        // Ensure we always return an array
-        return Array.isArray(res.data) ? res.data : [];
+        return res.data;
       } catch (err) {
         return [];
       }
@@ -26,8 +25,7 @@ const NetworkPage = () => {
     queryFn: async () => {
       try {
         const res = await axiosInstance.get("/connections");
-        // Ensure we always return an array
-        return Array.isArray(res.data) ? res.data : [];
+        return res.data;
       } catch (err) {
         return [];
       }
@@ -39,20 +37,21 @@ const NetworkPage = () => {
     queryFn: async () => {
       try {
         const res = await axiosInstance.get('/users/suggestions');
-        // Ensure we always return an array
-        return Array.isArray(res.data) ? res.data : [];
+        return res.data;
       } catch (err) {
         return [];
       }
     },
   });
 
-  // Safe suggested list preparation
+  // (related users removed per request)
+
+  // prepare suggested list excluding current connections and self
   const suggestedList = (() => {
     try {
-      const items = Array.isArray(suggestions) ? suggestions : [];
-      const connIds = new Set(Array.isArray(connections) ? connections.map((c) => c._id) : []);
-      return items.filter((s) => s && s._id !== user?._id && !connIds.has(s._id)).slice(0, 12);
+      const items = suggestions || [];
+      const connIds = new Set((connections || []).map((c) => c._id));
+      return items.filter((s) => s._id !== user?._id && !connIds.has(s._id)).slice(0, 12);
     } catch (err) {
       return [];
     }
@@ -67,9 +66,9 @@ const NetworkPage = () => {
         <div className="bg-secondary rounded-lg shadow p-6 mb-6">
           <h1 className="text-2xl font-bold mb-6">My Network</h1>
 
-          {Array.isArray(connectionRequests) && connectionRequests.length > 0 ? (
+          {connectionRequests?.length > 0 ? (
             <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-2">Connection Requests</h2>
+              <h2 className="text-xl font-semibold mb-2">Connection Request</h2>
               <div className="space-y-4">
                 {connectionRequests.map((request) => (
                   <FriendRequest key={request._id} request={request} />
@@ -83,13 +82,16 @@ const NetworkPage = () => {
                 No Connection Requests
               </h3>
               <p className="text-gray-600">
-                You don&apos;t have any pending connection requests at the moment.
+                You don&apos;t have any pending connection requests at the
+                moment.
+              </p>
+              <p className="text-gray-600 mt-2">
+                Explore suggested connections below to expand your network!
               </p>
             </div>
           )}
-
-          {/* My Connections */}
-          {Array.isArray(connections) && connections.length > 0 && (
+          {/* My Connections (moved to top) */}
+          {connections?.length > 0 && (
             <div className="mb-8">
               <h2 className="text-xl font-semibold mb-4">My Connections</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -104,8 +106,8 @@ const NetworkPage = () => {
             </div>
           )}
 
-          {/* Suggested users */}
-          {Array.isArray(suggestedList) && suggestedList.length > 0 && (
+          {/* Suggested users (below connections) */}
+          {suggestedList?.length > 0 && (
             <div className="mb-8">
               <h2 className="text-xl font-semibold mb-4">Suggested for you</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -120,5 +122,4 @@ const NetworkPage = () => {
     </div>
   );
 };
-
 export default NetworkPage;
