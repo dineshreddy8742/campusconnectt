@@ -1,5 +1,6 @@
 import React from 'react';
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import toast from 'react-hot-toast';
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../lib/axios";
 import { Link } from "react-router-dom";
@@ -11,13 +12,14 @@ const Navbar = () => {
   const queryClient = useQueryClient();
   // try to read cached authUser (set in App). If not available, fetch it.
   const cached = queryClient.getQueryData(['authUser']);
+  // Subscribe to the authUser query without triggering a network request here.
+  // App.jsx is responsible for fetching /auth/me; other components should
+  // read the cached value to avoid duplicate requests during initial mount.
   const { data: authUser } = useQuery({
     queryKey: ['authUser'],
-    queryFn: async () => {
-      if (cached) return cached;
-      const res = await axiosInstance.get('/auth/me');
-      return res.data;
-    },
+    // Do not perform a network fetch from Navbar; rely on existing cache/fetch
+    enabled: false,
+    initialData: cached,
   });
 
   const { data: notifications } = useQuery({
@@ -35,21 +37,20 @@ const Navbar = () => {
 
   const { mutate: logout } = useMutation({
     mutationFn: () => axiosInstance.post("/auth/logout"),
-    onSuccess: () => {
-      // Clear any client-side JWT (used by Google sign-in flow) and refresh auth state
-      try {
-        localStorage.removeItem("token");
-      } catch (e) {
-        // ignore
-      }
-      try {
-        // remove Authorization header immediately so subsequent requests don't include stale token
-        delete axiosInstance.defaults.headers.Authorization;
-      } catch (e) {
-        // ignore
-      }
+    // Optimistic client-side logout: clear token/header and navigate immediately
+    onMutate: async () => {
+      try { localStorage.removeItem("token"); } catch (e) { }
+      try { delete axiosInstance.defaults.headers.common['Authorization']; } catch (e) { }
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
       navigate("/login");
+    },
+    onError: (err) => {
+      // If server logout failed, just show an error but keep the client logged out state
+      console.error('Logout failed', err);
+      toast?.error?.(err?.response?.data?.message || 'Logout failed');
+    },
+    onSuccess: () => {
+      // server-side cleanup succeeded; nothing else needed
     },
   });
 
@@ -93,7 +94,8 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="bg-secondary shadow-md sticky top-0 z-10">
+      {/* Use white background for top navbar to avoid orange tone on desktop */}
+      <nav className="bg-white shadow-md sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center py-3">
             <div className="flex items-center space-x-3">

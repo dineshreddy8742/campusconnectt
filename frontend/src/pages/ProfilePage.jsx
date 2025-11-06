@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { axiosInstance } from "../lib/axios";
 import toast from "react-hot-toast";
 import ProfileHeader from "../components/ProfileHeader";
+import ProfileLeftNav from "../components/ProfileLeftNav";
 import AboutSection from "../components/AboutSection";
 import ExperienceSection from "../components/ExperienceSection";
 import EducationSection from "../components/EducationSection";
@@ -134,65 +135,94 @@ const ProfilePage = () => {
 
   const userData = isOwnProfile ? authUser : userProfile;
 
-  return (
-    <div className="max-w-4xl mx-auto p-4">
-      {!isOwnProfile && (
-        <div className="flex items-center gap-2 mb-4">
-          <button
-            onClick={handleMessage}
-            className="bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition duration-300"
-          >
-            Message
-          </button>
-          <button
-            onClick={handleRemoveConnection}
-            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 transition duration-300"
-          >
-            Remove Connection
-          </button>
-        </div>
-      )}
-      <ProfileHeader
-        userData={userData}
-        isOwnProfile={isOwnProfile}
-        onSave={(updatedData) => updateProfile(updatedData)}
-      />
-      <ProjectsSection
-        userData={userData}
-        isOwnProfile={isOwnProfile}
-        onSave={(updatedData) => updateProfile(updatedData)}
-      />
-      <AboutSection
-        userData={userData}
-        isOwnProfile={isOwnProfile}
-        onSave={(updatedData) => updateProfile(updatedData)}
-      />
-      <ExperienceSection
-        userData={userData}
-        isOwnProfile={isOwnProfile}
-        onSave={(updatedData) => updateProfile(updatedData)}
-      />
-      <EducationSection
-        userData={userData}
-        isOwnProfile={isOwnProfile}
-        onSave={(updatedData) => updateProfile(updatedData)}
-      />
-      <SkillsSection
-        userData={userData}
-        isOwnProfile={isOwnProfile}
-        onSave={(updatedData) => updateProfile(updatedData)}
-      />
+  const resolveArray = (maybe) => {
+    if (!maybe) return [];
+    if (Array.isArray(maybe)) return maybe;
+    if (Array.isArray(maybe.data)) return maybe.data;
+    return [];
+  };
 
-      {/* User's posts */}
-      <div className="mt-6">
-        <h2 className="text-xl font-semibold mb-3">Posts</h2>
-        {isLoadingPosts ? (
-          <p>Loading posts...</p>
-        ) : Array.isArray(userPosts) && userPosts.length > 0 ? (
-          userPosts.map((p) => <Post key={p._id} post={p} />)
-        ) : (
-          <p className="text-sm text-gray-600">No posts yet</p>
-        )}
+  const unreadNotificationCount = resolveArray(queryClient.getQueryData(['notifications'])).filter((n) => !n.read).length;
+  const unreadConnectionRequestsCount = resolveArray(queryClient.getQueryData(['connectionRequests'])).length;
+  const unreadMessagesCount = (() => {
+    const v = queryClient.getQueryData(['unreadMessagesCount']);
+    return typeof v === 'number' ? v : 0;
+  })();
+
+  return (
+    <div className="max-w-7xl mx-auto p-4">
+      {/* Desktop: two-column layout (left: profile + left nav, right: content).
+          Mobile: stacked layout remains unchanged. */}
+      <div className="lg:grid lg:grid-cols-[280px_1fr] lg:gap-6">
+        <div>
+          {!isOwnProfile && (
+            <div className="flex items-center gap-2 mb-4 lg:justify-start lg:pl-2">
+              <button
+                onClick={handleMessage}
+                className="bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition duration-300"
+              >
+                Message
+              </button>
+              <button
+                onClick={handleRemoveConnection}
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 transition duration-300"
+              >
+                Remove Connection
+              </button>
+            </div>
+          )}
+
+          <ProfileHeader
+            userData={userData}
+            isOwnProfile={isOwnProfile}
+            onSave={(updatedData) => updateProfile(updatedData)}
+          />
+
+          {/* Left vertical nav (desktop only) */}
+          <div className="mt-4 lg:mt-6 lg:block">
+            <ProfileLeftNav counts={{ notifications: unreadNotificationCount, requests: unreadConnectionRequestsCount, unreadMessages: unreadMessagesCount }} />
+          </div>
+        </div>
+
+        <main>
+          <ProjectsSection
+            userData={userData}
+            isOwnProfile={isOwnProfile}
+            onSave={(updatedData) => updateProfile(updatedData)}
+          />
+          <AboutSection
+            userData={userData}
+            isOwnProfile={isOwnProfile}
+            onSave={(updatedData) => updateProfile(updatedData)}
+          />
+          <ExperienceSection
+            userData={userData}
+            isOwnProfile={isOwnProfile}
+            onSave={(updatedData) => updateProfile(updatedData)}
+          />
+          <EducationSection
+            userData={userData}
+            isOwnProfile={isOwnProfile}
+            onSave={(updatedData) => updateProfile(updatedData)}
+          />
+          <SkillsSection
+            userData={userData}
+            isOwnProfile={isOwnProfile}
+            onSave={(updatedData) => updateProfile(updatedData)}
+          />
+
+          {/* User's posts */}
+          <div className="mt-6">
+            <h2 className="text-xl font-semibold mb-3">Posts</h2>
+            {isLoadingPosts ? (
+              <p>Loading posts...</p>
+            ) : Array.isArray(userPosts) && userPosts.length > 0 ? (
+              userPosts.map((p) => <Post key={p._id} post={p} />)
+            ) : (
+              <p className="text-sm text-gray-600">No posts yet</p>
+            )}
+          </div>
+        </main>
       </div>
     </div>
   );

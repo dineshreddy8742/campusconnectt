@@ -1,12 +1,15 @@
 import { Link } from "react-router-dom";
 import LoginForm from "../../components/auth/LoginForm";
+import { useEffect } from "react";
 
 const LoginPage = () => {
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <img className="mx-auto h-40 w-auto" src="/campus-connect-logo.svg" alt="Campus Connect" />
-        <h2 className=" text-center text-3xl font-extrabold text-gray-900">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+        <Link to="/">
+          <img className="mx-auto h-40 w-auto" src="/campus-connect-logo.svg" alt="Campus Connect" />
+        </Link>
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
           Sign in to your account
         </h2>
       </div>

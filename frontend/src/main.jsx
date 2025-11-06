@@ -6,6 +6,7 @@ import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import MessagesPage from './pages/MessagesPage';
+import { axiosInstance } from './lib/axios';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,19 +18,40 @@ const queryClient = new QueryClient({
   },
 });
 
+// If a token exists in localStorage, set the axios default header immediately
+// so initial requests (like /auth/me) use it without waiting for React effects.
+try {
+  const t = localStorage.getItem('token');
+  if (t) axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${t}`;
+} catch (e) {
+  // ignore
+}
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     {
-      /* Allow a fallback client id so the dev flow still works if .env isn't set.
-         The Client ID is public information; however prefer setting VITE_GOOGLE_CLIENT_ID
-         in your local .env for clarity. */
+      /* Only enable Google OAuth when VITE_GOOGLE_CLIENT_ID is provided. */
     }
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || '558815544186-5c7a6ngtepgj3g95vb1l6g40kevadad5.apps.googleusercontent.com'}>
+    {import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
+      <GoogleOAuthProvider
+        clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}
+        onScriptLoadError={(error) => {
+          console.error('Failed to load Google OAuth script:', error);
+        }}
+        onScriptLoadSuccess={() => console.log('Google OAuth script loaded successfully')}
+      >
+        <BrowserRouter>
+          <QueryClientProvider client={queryClient}>
+            <App />
+          </QueryClientProvider>
+        </BrowserRouter>
+      </GoogleOAuthProvider>
+    ) : (
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
           <App />
         </QueryClientProvider>
       </BrowserRouter>
-    </GoogleOAuthProvider>
+    )}
   </StrictMode>
 );

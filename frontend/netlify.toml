@@ -1,8 +1,6 @@
-[build]
-  command = "npm run build"
-  publish = "dist"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+## Netlify config removed
+# This file previously contained Netlify-specific deployment configuration.
+# Deployment configuration was intentionally removed per project request to
+# keep the repository focused on local development. If you want to re-add
+# hosting configuration for Netlify later, restore the appropriate build
+# and redirect settings here.

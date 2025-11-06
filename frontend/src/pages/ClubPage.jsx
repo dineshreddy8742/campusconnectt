@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { axiosInstance } from '../lib/axios';
+import { useQueryClient } from '@tanstack/react-query';
 import PostCreation from '../components/PostCreation';
 import Post from '../components/Post';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -12,20 +13,16 @@ const ClubPage = () => {
   const navigate = useNavigate();
   const [showFollowers, setShowFollowers] = useState(false);
   const [applications, setApplications] = useState([]);
+  const queryClient = useQueryClient();
 
   const fetch = async () => {
     try {
       const res = await axiosInstance.get(`/clubs/${id}`);
       const clubData = res.data;
       // determine if current user is a member (backend may not include current user id)
-      let currentUser = null;
-      try {
-        const meRes = await axiosInstance.get('/auth/me');
-        currentUser = meRes.data;
-      } catch (e) {
-        // if unauthenticated, currentUser remains null
-        currentUser = null;
-      }
+      // Read cached current user from react-query to avoid extra network calls
+      const queryClient = useQueryClient();
+      const currentUser = queryClient.getQueryData(['authUser']) || null;
       clubData.currentUser = currentUser;
 
       // normalize member ids to strings and check membership safely

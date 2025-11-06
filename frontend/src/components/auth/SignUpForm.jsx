@@ -62,14 +62,47 @@ const SignUpForm = () => {
       const res = await axiosInstance.post("/auth/signup", data);
       return res.data;
     },
-    onSuccess: () => {
-      toast.success("Account created successfully");
-      queryClient.invalidateQueries({ queryKey: ["authUser"] }); //succes durumunda queryClient sayesinde sayfa yenileme işlemi yapılır ve ekranda manuel olarak yenilemeden gözükür
+    onSuccess: async (data) => {
+      // Backend may return a token/user (for token-based flows) or just set a cookie
+      // and return a message. Handle both cases.
+      const { token, user } = data || {};
+      if (token) {
+        localStorage.setItem("token", token);
+        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (user) {
+          queryClient.setQueryData(["authUser"], user);
+        } else {
+          queryClient.invalidateQueries({ queryKey: ["authUser"] });
+        }
+        toast.success("Account created successfully");
+        navigate("/home");
+        return;
+      }
+
+      // If no token was returned, the backend may have set a cookie. Attempt to
+      // fetch the current user to populate client state. If that succeeds, go to
+      // /home. Otherwise, navigate to /login with a success message.
+      try {
+        const me = await axiosInstance.get('/auth/me');
+        if (me?.data) {
+          queryClient.setQueryData(["authUser"], me.data);
+          toast.success("Account created and signed in");
+          navigate('/home');
+          return;
+        }
+      } catch (err) {
+        // ignore: we'll fall back to directing user to login
+      }
+
+      toast.success("Account created successfully. Please sign in.");
+      navigate('/login');
     },
     onError: (err) => {
       toast.error(err.response.data.message || "Something went wrong");
     },
   });
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
   return (
     <form onSubmit={handleSignUp} className="flex flex-col gap-4">
       <input
@@ -117,7 +150,9 @@ const SignUpForm = () => {
         )}
       </button>
       <div className="mt-4 flex justify-center">
-        <GoogleLogin onSuccess={handleGoogleSuccess} onError={handleGoogleError} />
+        {googleClientId ? (
+          <GoogleLogin onSuccess={handleGoogleSuccess} onError={handleGoogleError} />
+        ) : null}
       </div>
     </form>
   );

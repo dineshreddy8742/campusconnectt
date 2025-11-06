@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { axiosInstance } from '../lib/axios';
+import { useQueryClient } from '@tanstack/react-query';
 import ClubCard from '../components/ClubCard';
 import CreateClubModal from '../components/CreateClubModal';
 
@@ -17,17 +18,15 @@ const ClubsPage = () => {
     }
   };
 
+  const queryClient = useQueryClient();
+
   useEffect(() => { fetch(); }, []);
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await axiosInstance.get('/auth/me');
-        setCurrentUser(res.data);
-      } catch (err) {
-        // ignore
-      }
-    })();
-  }, []);
+    const cached = queryClient.getQueryData(['authUser']);
+    setCurrentUser(cached || null);
+    // subscribe to query cache changes is possible but for simplicity we
+    // rely on global invalidation to update components when auth changes.
+  }, [queryClient]);
 
   return (
     <div className="p-6">

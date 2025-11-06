@@ -12,12 +12,46 @@ const LoginForm = () => {
   const queryClient = useQueryClient();
 
   const { mutate: loginMutation, isLoading } = useMutation({
-    mutationFn: (userData) => axiosInstance.post("/auth/login", userData),
-    onSuccess: () => {
+    mutationFn: async (userData) => {
+      const response = await axiosInstance.post("/auth/login", userData);
+      const { token } = response.data;
+      if (token) {
+        localStorage.setItem("token", token);
+        // set authorization header consistently
+        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      }
+      return response;
+    },
+    onSuccess: async (response) => {
+      // If server returned user data/token include it, otherwise try to
+      // fetch /auth/me (cookie-based sessions) to populate client state.
+      if (response.data?.user) {
+        queryClient.setQueryData(["authUser"], response.data.user);
+        toast.success("Logged in successfully");
+        navigate("/home");
+        return;
+      }
+
+      // Try to populate authUser via cookie session
+      try {
+        const me = await axiosInstance.get('/auth/me');
+        if (me?.data) {
+          queryClient.setQueryData(["authUser"], me.data);
+          toast.success("Logged in successfully");
+          navigate('/home');
+          return;
+        }
+      } catch (err) {
+        // fallthrough
+      }
+
+      // If we couldn't verify session, navigate to login and show message
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
+      toast.success("Logged in (server acknowledged). Please refresh if you aren't redirected.");
+      navigate("/home");
     },
     onError: (err) => {
-      toast.error(err.response.data.message || "Something went wrong");
+      toast.error(err.response?.data?.message || "Something went wrong");
     },
   });
 
@@ -40,12 +74,12 @@ const LoginForm = () => {
         }
         // Ensure axios will send Authorization header immediately
         try {
-          axiosInstance.defaults.headers.Authorization = `Bearer ${token}`;
+          axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         } catch (e) {
           // ignore
         }
         toast.success("Logged in with Google");
-        navigate("/");
+        navigate("/home");
       }
     } catch (err) {
       console.error(err);
@@ -61,6 +95,8 @@ const LoginForm = () => {
     e.preventDefault();
     loginMutation({ username, password });
   };
+
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-md">
@@ -85,7 +121,9 @@ const LoginForm = () => {
         {isLoading ? <Loader className="size-5 animate-spin" /> : "Login"}
       </button>
       <div className="mt-4 flex justify-center">
-        <GoogleLogin onSuccess={handleGoogleSuccess} onError={handleGoogleError} />
+        {googleClientId ? (
+          <GoogleLogin onSuccess={handleGoogleSuccess} onError={handleGoogleError} />
+        ) : null}
       </div>
     </form>
   );
