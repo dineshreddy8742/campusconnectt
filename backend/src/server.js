@@ -161,8 +161,8 @@ io.on('connection', (socket) => {
     // update DB
     User.findByIdAndUpdate(uid, { isOnline: true }, { new: true }).exec();
     // broadcast online status
-      // emit the userId string (client expects a simple id)
-      io.emit('userOnline', String(uid));
+    // emit the userId string (client expects a simple id)
+    io.emit('userOnline', String(uid));
 
     // join a room for the user for private emits
     socket.join(uid.toString());
@@ -226,7 +226,7 @@ io.on('connection', (socket) => {
       // update lastSeen + offline
       await User.findByIdAndUpdate(uid, { isOnline: false, lastSeen: new Date() }).exec();
       // broadcast offline
-  io.emit('userOffline', String(uid));
+      io.emit('userOffline', String(uid));
     }
   });
 });
@@ -243,7 +243,10 @@ const start = async () => {
   });
 };
 
-start().catch((err) => {
-  console.error('Failed to start server', err);
-  // don't exit here; let nodemon keep running and allow edits to fix the issue
-});
+if (process.argv[1] === __filename) {
+  start().catch((err) => {
+    console.error('Failed to start server', err);
+  });
+}
+
+export default app;

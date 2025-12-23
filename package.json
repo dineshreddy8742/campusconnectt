@@ -1,0 +1,15 @@
+{
+    "name": "campus-connect-monorepo",
+    "version": "1.0.0",
+    "private": true,
+    "workspaces": [
+        "backend",
+        "frontend"
+    ],
+    "scripts": {
+        "build": "cd frontend && npm install && npm run build && npx -y make-dir-cli public && npx -y copyfiles -u 2 \"frontend/dist/**/*\" public"
+    },
+    "engines": {
+        "node": "20.x"
+    }
+}
