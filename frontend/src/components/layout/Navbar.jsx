@@ -15,9 +15,15 @@ const Navbar = () => {
   // Subscribe to the authUser query without triggering a network request here.
   // App.jsx is responsible for fetching /auth/me; other components should
   // read the cached value to avoid duplicate requests during initial mount.
+  // read the cached value to avoid duplicate requests during initial mount.
   const { data: authUser } = useQuery({
     queryKey: ['authUser'],
+    queryFn: async () => {
+      const res = await axiosInstance.get("/auth/me");
+      return res.data;
+    },
     // Do not perform a network fetch from Navbar; rely on existing cache/fetch
+    // However, if we do need to fetch (e.g. invalidation), this function is now available.
     enabled: false,
     initialData: cached,
   });
