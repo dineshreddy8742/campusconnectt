@@ -59,7 +59,7 @@ instance.interceptors.response.use(
     } else {
       // Handle other errors
       console.error('API Error Full:', error);
-      console.error('API Error Response:', error.response);
+      console.error('API Error Response Data (Stringified):', JSON.stringify(error.response?.data, null, 2));
       console.error('API Error Message:', error.message);
     }
     return Promise.reject(error);
