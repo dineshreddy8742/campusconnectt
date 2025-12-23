@@ -27,8 +27,10 @@ const missing = requiredEnv.filter(k => !process.env[k]);
 if (missing.length) {
   console.error(`Missing required environment variables: ${missing.join(', ')}`);
   console.error('Please copy backend/.env.example to backend/.env and fill the values, or set the environment variables in your hosting platform.');
-  // exit with non-zero code so deploys fail fast and do not start with missing secrets
-  process.exit(1);
+  console.error(`Missing required environment variables: ${missing.join(', ')}`);
+  console.error('Please copy backend/.env.example to backend/.env and fill the values, or set the environment variables in your hosting platform.');
+  // Do not exit; throw an error so the API handler can catch and report it cleanly
+  throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
 }
 const PORT = process.env.PORT || 5000;
 
